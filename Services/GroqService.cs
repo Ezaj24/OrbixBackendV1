@@ -13,7 +13,11 @@ namespace OrbixBackend.Services
         public GroqService(IConfiguration config)
         {
             _http = new HttpClient();
-            _apiKey = config["Groq:ApiKey"];
+
+            // 🔥 FIX: use Render environment variable first
+            _apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY")
+                      ?? config["Groq:ApiKey"]
+                      ?? "";
 
             _http.BaseAddress = new Uri("https://api.groq.com/openai/v1/");
             _http.DefaultRequestHeaders.Authorization =
@@ -44,7 +48,7 @@ namespace OrbixBackend.Services
                     new StringContent(json, Encoding.UTF8, "application/json")
                 );
             }
-            catch (Exception)
+            catch
             {
                 return "ORBIX: My AI engine is temporarily unavailable due to a connection issue. No charges were made.";
             }
@@ -62,7 +66,7 @@ namespace OrbixBackend.Services
                     {
                         string errorMsg = errorObj.GetProperty("message").GetString() ?? "";
 
-                        // 🔒 FREE-SAFETY LAYER (IMPORTANT)
+                        // 🔒 FREE-SAFETY LAYER
                         if (errorMsg.Contains("rate limit", StringComparison.OrdinalIgnoreCase) ||
                             errorMsg.Contains("billing", StringComparison.OrdinalIgnoreCase) ||
                             errorMsg.Contains("model_decommissioned", StringComparison.OrdinalIgnoreCase) ||
@@ -72,15 +76,12 @@ namespace OrbixBackend.Services
                         }
                     }
                 }
-                catch
-                {
-                    // Ignore JSON parse errors
-                }
+                catch { }
 
                 return "ORBIX: An unexpected AI backend error occurred. No charges were made. Try again later.";
             }
 
-            // 🔍 Extract valid AI response
+            // Extract valid AI response
             using var okDoc = JsonDocument.Parse(result);
             return okDoc.RootElement
                 .GetProperty("choices")[0]
