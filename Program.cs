@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ---------- LOAD CONFIG ----------
 builder.Configuration
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddEnvironmentVariables(); // for deployment
+    .AddEnvironmentVariables(); // Needed for Render
 
 // ---------- SERVICES ----------
 builder.Services.AddControllers();
@@ -21,10 +21,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowAnyOrigin(); 
+        policy.AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowAnyOrigin();
     });
 });
 
@@ -40,16 +39,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Disable https redirect in development (to fix your warning)
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+// ❌ DO NOT USE HTTPS REDIRECT
+// (Render already handles HTTP/HTTPS, this breaks APIs)
 
-// CORS
+// Enable CORS
 app.UseCors("AllowFrontend");
 
-// Controllers
+// Map controllers
 app.MapControllers();
 
 // ---------- RUN ----------
