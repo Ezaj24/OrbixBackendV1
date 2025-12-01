@@ -1,0 +1,6 @@
+@OrbixBackend_HostAddress = http://localhost:5140
+
+GET {{OrbixBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
